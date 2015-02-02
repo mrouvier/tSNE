@@ -19,8 +19,8 @@ class TSNE
 {    
 public:
     void run(double* X, int N, int D, double* Y, int no_dims, double perplexity, double theta);
-    bool load_data(double** data, int* n, int* d, double* theta, double* perplexity);
-    void save_data(double* data, int* landmarks, double* costs, int n, int d);
+    double* load_data(int& n, int& d, string file);
+    void save_data(double* data, int* landmarks, double* costs, int n, int d, string file);
 
     void symmetrizeMatrix(int** row_P, int** col_P, double** val_P, int N); // should be static?!
 

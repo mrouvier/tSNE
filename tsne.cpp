@@ -12,6 +12,8 @@ extern "C" {
 }
 
 
+#include <iostream>
+#include <fstream>
 #include <math.h>
 #include <float.h>
 #include <stdlib.h>
@@ -24,6 +26,7 @@ extern "C" {
 
 
 using namespace std;
+
 
 // Perform t-SNE
 void TSNE::run(double* X, int N, int D, double* Y, int no_dims, double perplexity, double theta) {
@@ -770,80 +773,94 @@ double TSNE::randn() {
 	return x;
 }
 
+
 // Function that loads data from a t-SNE file
 // Note: this function does a malloc that should be freed elsewhere
-bool TSNE::load_data(double** data, int* n, int* d, double* theta, double* perplexity) {
+double* TSNE::load_data(int& n, int& d, string file) {
 	
 	// Open file, read first 2 integers, allocate memory, and read the data
-    FILE *h;
-	if((h = fopen("data.dat", "r+b")) == NULL) {
-		printf("Error: could not open data file.\n");
-		return false;
-	}
-	fread(n, sizeof(int), 1, h);											// number of datapoints
-	fread(d, sizeof(int), 1, h);											// original dimensionality
-    fread(theta, sizeof(double), 1, h);										// gradient accuracy
-	fread(perplexity, sizeof(double), 1, h);								// perplexity
-	*data = (double*) calloc(*d * *n, sizeof(double));
-    if(*data == NULL) { printf("Memory allocation failed!\n"); exit(1); }
-    fread(*data, sizeof(double), *n * *d, h);                               // the data
-	fclose(h);
-	printf("Read the %i x %i data matrix successfully!\n", *n, *d);
-	return true;
+    fstream f(file.c_str());
+    f >> n >> d;
+
+    double* data = new double[n*d];
+    for(int i = 0; i < n; i++) {
+        for(int j = 0; j < d; j++) {
+            double valeur;
+            f >> valeur;
+            int taille = i * d + j;
+            data[ taille ] = valeur;
+        }
+    }
+
+    cerr<<"Read the "<<n<<"x"<<d<<" data matrix successfully!"<<endl;
+
+    return data;
+
 }
 
+
 // Function that saves map to a t-SNE file
-void TSNE::save_data(double* data, int* landmarks, double* costs, int n, int d) {
+void TSNE::save_data(double* data, int* landmarks, double* costs, int n, int d, string file) {
     
 	// Open file, write first 2 integers and then the data
-	FILE *h;
-	if((h = fopen("result.dat", "w+b")) == NULL) {
-		printf("Error: could not open data file.\n");
-		return;
-	}
-	fwrite(&n, sizeof(int), 1, h);
-	fwrite(&d, sizeof(int), 1, h);
-    fwrite(data, sizeof(double), n * d, h);
-	fwrite(landmarks, sizeof(int), n, h);
-    fwrite(costs, sizeof(double), n, h);
-    fclose(h);
-	printf("Wrote the %i x %i data matrix successfully!\n", n, d);
+    std::cerr<< "information : " << n << " " << d << std::endl;
+
+    ofstream f(file.c_str());
+    f<<n<<" "<<d<<"\n";
+    for(int i = 0; i < n; i++) {
+        for(int j = 0; j < d; j++) {
+            f<< data[ i*d + j ]<<" ";
+        }
+        f<<"\n";
+    }
+    f.close();
+
+	cerr<<"Wrote the "<<n<<" x "<<d<<" data matrix successfully!"<<endl;
 }
 
 
 // Function that runs the Barnes-Hut implementation of t-SNE
-int main() {
-    
+int main(int argc, char** argv) {
+   
+    if(argc != 3) {
+        cerr<<"Usage : ./programme <(i) input file> <(o) output file>"<<endl;
+        cerr<<"Mickael Rouvier <mickael.rouvier@lif.univ-mrs.fr>"<<endl;
+        return -1;
+    }
+
     // Define some variables
-	int origN, N, D, no_dims = 2, *landmarks;
+	int origN, N, D, no_dims = 2;
 	double perc_landmarks;
 	double perplexity, theta, *data;
+    theta = 0.01;
+    perplexity = 20;
     TSNE* tsne = new TSNE();
     
     // Read the parameters and the dataset
-	if(tsne->load_data(&data, &origN, &D, &theta, &perplexity)) {
+	data = tsne->load_data(origN, D, argv[1]);
         
-		// Make dummy landmarks
-        N = origN;
-        int* landmarks = (int*) malloc(N * sizeof(int));
-        if(landmarks == NULL) { printf("Memory allocation failed!\n"); exit(1); }
-        for(int n = 0; n < N; n++) landmarks[n] = n;
+    // Make dummy landmarks
+    N = origN;
+    int* landmarks = (int*) malloc(N * sizeof(int));
+    if(landmarks == NULL) { printf("Memory allocation failed!\n"); exit(1); }
+    for(int n = 0; n < N; n++) landmarks[n] = n;
 
-		// Now fire up the SNE implementation
-		double* Y = (double*) malloc(N * no_dims * sizeof(double));
-		double* costs = (double*) calloc(N, sizeof(double));
-        if(Y == NULL || costs == NULL) { printf("Memory allocation failed!\n"); exit(1); }
-		tsne->run(data, N, D, Y, no_dims, perplexity, theta);
-		
-		// Save the results
-		tsne->save_data(Y, landmarks, costs, N, no_dims);
-        
-        // Clean up the memory
-		free(data); data = NULL;
-		free(Y); Y = NULL;
-		free(costs); costs = NULL;
-		free(landmarks); landmarks = NULL;
-    }
-    delete(tsne);
+    // Now fire up the SNE implementation
+    double* Y = (double*) malloc(N * no_dims * sizeof(double));
+    double* costs = (double*) calloc(N, sizeof(double));
+    if(Y == NULL || costs == NULL) { printf("Memory allocation failed!\n"); exit(1); }
+    tsne->run(data, N, D, Y, no_dims, perplexity, theta);
+
+    // Save the results
+    tsne->save_data(Y, landmarks, costs, N, no_dims, argv[2]);
+
+    // Clean up the memory
+    delete data;
+    delete Y;
+    delete costs;
+    delete landmarks;
+    delete tsne;
+
+    return 0;
 }
 
