@@ -2,7 +2,7 @@ t-Distributed Stochastic Neighbor Embedding (tSNE)
 ===========
 **Open-source implementation of tSNE **
 
-tSNE technique for dimensionality reduction that is particularly well suited for the visualization of high-dimensional datasets. This code is a branch of [Laurens van der Maaten](http://lvdmaaten.github.io/tsne/) in which we add a command line parameters.
+tSNE is a technique for dimensionality reduction that is particularly well suited for the visualization of high-dimensional datasets. This code is a branch of [Laurens van der Maaten](http://lvdmaaten.github.io/tsne/) in which we add a command line parameters.
 
 
 Install
