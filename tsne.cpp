@@ -800,7 +800,7 @@ double* TSNE::load_data(int& n, int& d, string file) {
 
 
 // Function that saves map to a t-SNE file
-void TSNE::save_data(double* data, int* landmarks, double* costs, int n, int d, string file) {
+void TSNE::save_data(double* data, int n, int d, string file) {
     
 	// Open file, write first 2 integers and then the data
     std::cerr<< "information : " << n << " " << d << std::endl;
@@ -829,36 +829,26 @@ int main(int argc, char** argv) {
     }
 
     // Define some variables
-	int origN, N, D, no_dims = 2;
-	double perc_landmarks;
+	int N, D, no_dims = 2;
 	double perplexity, theta, *data;
     theta = 0.01;
     perplexity = 20;
+
     TSNE* tsne = new TSNE();
     
     // Read the parameters and the dataset
-	data = tsne->load_data(origN, D, argv[1]);
+	data = tsne->load_data(N, D, argv[1]);
         
-    // Make dummy landmarks
-    N = origN;
-    int* landmarks = (int*) malloc(N * sizeof(int));
-    if(landmarks == NULL) { printf("Memory allocation failed!\n"); exit(1); }
-    for(int n = 0; n < N; n++) landmarks[n] = n;
-
     // Now fire up the SNE implementation
-    double* Y = (double*) malloc(N * no_dims * sizeof(double));
-    double* costs = (double*) calloc(N, sizeof(double));
-    if(Y == NULL || costs == NULL) { printf("Memory allocation failed!\n"); exit(1); }
+    double* Y = new double[N*no_dims];
     tsne->run(data, N, D, Y, no_dims, perplexity, theta);
 
     // Save the results
-    tsne->save_data(Y, landmarks, costs, N, no_dims, argv[2]);
+    tsne->save_data(Y, N, no_dims, argv[2]);
 
     // Clean up the memory
     delete data;
     delete Y;
-    delete costs;
-    delete landmarks;
     delete tsne;
 
     return 0;
