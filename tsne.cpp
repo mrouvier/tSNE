@@ -824,7 +824,7 @@ int main(int argc, char** argv) {
    
     if(argc != 3) {
         cerr<<"Usage : ./programme <(i) input file> <(o) output file>"<<endl;
-        cerr<<"Mickael Rouvier <mickael.rouvier@lif.univ-mrs.fr>"<<endl;
+        cerr<<"Mickael Rouvier <mickael.rouvier@gmail.com>"<<endl;
         return -1;
     }
 
